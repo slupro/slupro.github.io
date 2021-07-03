@@ -154,6 +154,9 @@ exclude:
   - node_modules
   - '*.json'
 
+plugins:
+  - jemoji
+
 jekyll-archives:
   enabled: [categories, tags]
   layouts:
