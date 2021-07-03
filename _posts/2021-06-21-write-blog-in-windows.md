@@ -4,7 +4,7 @@ title:  "第一篇blog，windows下用jekyll docker写blog"
 subtitle:   "Write blog by using jekyll docker in windows"
 date:   2021-06-27 12:00:00 +10:00
 author: "Steven Lu @slupro"
-categories: [建站, 随便说说]  # up to 2.
+categories: [建站]  # up to 2.
 tags: [docker, jekyll]  # TAG names should always be lowercase, 0 to infinity.
 ---
 
