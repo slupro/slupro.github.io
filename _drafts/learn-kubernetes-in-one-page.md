@@ -924,7 +924,78 @@ spec:
 kubectl get secret mysec -o yaml
 ```
 
+## Deployment
+
+### 更新pod
+
+两种方式更新：先删pod v1，再创建pod v2。先创建pod v2，再删pod v1。第一种方式会导致服务暂时不可用，第二种方式会需要更多的硬件资源。
+
+#### 先删v1，再创建v2
+
+如果用ReplicationController来管理pod的话，直接更新其中的pod模板。
+
+#### 先创建v2，再删v1
+
+蓝绿部署(blue-green deployment)：使用service的标签选择器将流量切换到新pod，正常后再删除旧版本的pod。使用```kubectl set selector```。
+
+### 用 ReplicationController 实现自动滚动升级
+
+```
+kind: ReplicationController
+metadata:
+    name: testrc-v1
+```
+
+使用 testrc-v2 滚动替换 v1: ```kubectl rolling-update testrc-v1 testrc-v2 --image=xxx:v2 --v 6```。通过参数 ```--v 6``` 来显示替换的详细日志。
+
+> 已不再使用 rolling-update，因为 kubectl 只是执行滚动升级的客户端，具体执行操作是一步步通过rest发送到K8S API完成，如果升级中网络出错，升级将会中断。
+
+### Deployment
+
+Deployment是更高层的资源使用方式，ReplicationController和ReplicaSet更底层。在使用 Deployment 时，pod是由Deployment底层的ReplicaSet创建和管理的。
+
+#### 创建 Deployment
+
+Deployment创建的定义方式和ReplicationController类似，只是 kind 为 Deployment。
+
+```
+# 创建Deployment，--record 会记录历史版本号
+kubectl create -f xxx.yaml --record
+
+# 查看
+kubectl get deployment
+kubectl describe deployment
+
+# Deployment 是使用 ReplicaSet 管理pod
+kubectl get replicasets
+```
+
+#### 使用 Deployment 升级
+
+Deployment升级有两种方式：
+
+1. RollingUpdate：默认升级策略，会逐渐删除旧的pod，创建新的pod。
+2. Recreate：一次性删除所有旧pod，再创建新pod，中间会有不可用的时候。
+
+```
+# 修改单个或少量资源属性时，可使用 kubectl patch。
+# minReadySeconds 设置滚动升级的速度。
+kubectl patch deployment xxx -p '{"spec": {"minReadySeconds": 10}}'
+
+# 将deployment_name的pod模板中的镜像改为image_name:v2。
+kubectl set image deployment deployment_name container_name=image_name:v2
+
+```
+
 ## K8s tips
+
+### Centralized Logging (EFK)
+
+EFK(Elasticsearch, Fluentd, Kibana)
+
+* Elasticsearch: a period, distributed, and a scalable computer program that permits for full-text and structured search, further as analytics.
+* Kibana: a robust knowledge visualization frontend, and dashboard for Elasticsearch.
+* Fluentd: gather, transform, and ship logs knowledge to the Elasticsearch backend.
 
 ### 坑
 
