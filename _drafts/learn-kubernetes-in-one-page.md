@@ -974,7 +974,7 @@ kubectl get replicasets
 
 Deployment升级有两种方式：
 
-1. RollingUpdate：默认升级策略，会逐渐删除旧的pod，创建新的pod。
+1. RollingUpdate：默认升级策略，会创建新的pod，并逐渐删除旧的pod。底层的ReplicaSet不会被删除，恢复时使用。
 2. Recreate：一次性删除所有旧pod，再创建新pod，中间会有不可用的时候。
 
 ```
@@ -982,10 +982,47 @@ Deployment升级有两种方式：
 # minReadySeconds 设置滚动升级的速度。
 kubectl patch deployment xxx -p '{"spec": {"minReadySeconds": 10}}'
 
-# 将deployment_name的pod模板中的镜像改为image_name:v2。
-kubectl set image deployment deployment_name container_name=image_name:v2
+# 将deployment_name的pod模板中的镜像改为image_name:v2。触发滚动升级。
+kubectl set image deployment xxx container_name=image_name:v2
+
+# status可以查看升级的详细过程
+kubectl rollout status deployment xxx
+
+# 使用pause或resume暂停或恢复滚动升级，用于Canary金丝雀发布
+kubectl rollout pause/resume deployment xxx
+```
+
+> 控制滚动升级速率：maxSurge 和 maxUnavailable 属性。
+> minReadySeconds，新pod至少运行多久后才视为可用。
+> 默认情况下，超过10min不能完成滚动升级，将被认为失败。可以通过设置progressDeadlineSeconds来设定。
+
+#### 回滚 Deployment 的升级
+
+> 升级后不应手动删除 ReplicaSet 的信息，这些信息保存着历史版本，以便进行回滚。
+
+手动回滚：
 
 ```
+# 回滚到上一个版本。undo命令可以在滚动升级的过程中执行。
+kubectl rollout undo deployment xxx
+
+# 查看升级的历史版本
+kubectl rollout history deployment xxx
+
+# 回滚到指定版本
+kubectl rollout undo deployment xxx --to-revision=1
+```
+
+## StatefulSet
+
+ReplicaSet 和 ReplicationController 创建的新pod和被替换的pod拥有不同的名称、网络标识和状态。为了保证这些信息在新的pod中保持一致，引入了 StatefulSet。
+
+### 使用 StatefulSet
+
+> StatefulSet 缩容的时候一次只操作一个pod，如果有实例不健康时，StatefulSet也不会缩容。避免集群中多个节点出问题时丢数据。
+
+由于一个持久卷声明PVC被删除时，对应的持久卷PV也会被删除。但在 StatefulSet 中，即使缩容，也不删PVC，否则删除PV会造成数据丢失。扩容时，StatefulSet新增的pod会使用旧的PVC，也就是会使用之前pod使用的PVC，从而访问相同的数据。
+
 
 ## K8s tips
 
@@ -1000,6 +1037,14 @@ EFK(Elasticsearch, Fluentd, Kibana)
 ### 坑
 
 1. 服务的集群IP是虚拟IP，因此无法 PING 通，可以通过 IP+开放的端口 来确认。
+
+### k8s修改资源的方式
+
+1. kubectl edit: 使用默认编辑器打开资源配置，资源对象会被更新。```kubectl edit deployment xxx```
+2. kubectl patch: 修改少量资源属性。```kubectl patch deployment xxx -p '{"spec" : ...}'```
+3. kubectl apply: 使用一个完整的yaml或json文件，来更新或创建对象，需要包含资源的完整定义。```kubectl apply -f xxx.yaml```
+4. kubectl replace: 将现有对象替换为yaml或json定义的新对象，只能用来更新，不能创建。```kubectl replace -f xxx.yaml```
+5. kubectl set image: 修改pod、ReplicationController、Deployment、DaemonSet、Job、ReplicaSet中的镜像。```kubectl set image deployment  xxx container_name=aaa```
 
 ### Commands
 
