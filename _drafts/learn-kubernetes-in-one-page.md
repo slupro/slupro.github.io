@@ -1019,10 +1019,35 @@ ReplicaSet 和 ReplicationController 创建的新pod和被替换的pod拥有不�
 
 ### 使用 StatefulSet
 
-> StatefulSet 缩容的时候一次只操作一个pod，如果有实例不健康时，StatefulSet也不会缩容。避免集群中多个节点出问题时丢数据。
+> StatefulSet 缩容的时候一次只操作一个pod，如果有实例不健康，StatefulSet也不会缩容。避免集群中多个节点出问题时丢数据。
 
 由于一个持久卷声明PVC被删除时，对应的持久卷PV也会被删除。但在 StatefulSet 中，即使缩容，也不删PVC，否则删除PV会造成数据丢失。扩容时，StatefulSet新增的pod会使用旧的PVC，也就是会使用之前pod使用的PVC，从而访问相同的数据。
 
+> at most one: k8s 保证不会有两个相同标记和绑定相同PVC的pod同时运行。
+
+1. 创建StatefulSet的service时，spec.clusterIP 必须是 None，也就是headless service。
+2. ReplicaSet 会一次创建所有的pod，但 StatefulSet 会在前一个pod Running后再创建下一个pod。这对于需要选举的节点来说，StatefulSet更安全。
+3. 缩容的时候，会先删除拥有最高索引的pod。
+
+### DNS 中的 SRV 记录
+
+可以在DNS中查询 SRV 记录来获得StatefulSet中的其它pod地址。SRV记录返回的顺序是随机的。
+
+```
+# 列出 SRV 记录
+dig SRV pod.default.svc.cluster.local
+```
+
+### 修改 StatefulSet
+
+```kubectl edit statefulset xxx```修改StatefulSet时：
+
+1. 如果修改了image的地址，k8s并不会更新已经有的pod。
+2. 如果spec.replicas增加了，会创建新的pod。
+
+### 节点失效
+
+当一个节点失效（网络掉了、断电等）后，该节点上的 kubelet 无法与 k8s API 通信，所以k8s认为该节点 NotReady(```kubectl get node```)，节点上的pod的状态为 Unknown。该pod的状态在超时(可配)未更新后，k8s将该pod标记为Terminating(虽然该pod还在断线的节点上运行)。由于k8s已无法通知离线的节点来删除该pod，所以可以手动强制删除```kubectl delete po xxx --force --grace-period 0```。
 
 ## K8s tips
 
