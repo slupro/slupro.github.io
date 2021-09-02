@@ -1045,6 +1045,8 @@ dig SRV pod.default.svc.cluster.local
 1. 如果修改了image的地址，k8s并不会更新已经有的pod。
 2. 如果spec.replicas增加了，会创建新的pod。
 
+just a test
+
 ### 节点失效
 
 当一个节点失效（网络掉了、断电等）后，该节点上的 kubelet 无法与 k8s API 通信，所以k8s认为该节点 NotReady(```kubectl get node```)，节点上的pod的状态为 Unknown。该pod的状态在超时(可配)未更新后，k8s将该pod标记为Terminating(虽然该pod还在断线的节点上运行)。由于k8s已无法通知离线的节点来删除该pod，所以可以手动强制删除```kubectl delete po xxx --force --grace-period 0```。
