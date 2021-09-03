@@ -1045,11 +1045,29 @@ dig SRV pod.default.svc.cluster.local
 1. 如果修改了image的地址，k8s并不会更新已经有的pod。
 2. 如果spec.replicas增加了，会创建新的pod。
 
-just a test
-
 ### 节点失效
 
 当一个节点失效（网络掉了、断电等）后，该节点上的 kubelet 无法与 k8s API 通信，所以k8s认为该节点 NotReady(```kubectl get node```)，节点上的pod的状态为 Unknown。该pod的状态在超时(可配)未更新后，k8s将该pod标记为Terminating(虽然该pod还在断线的节点上运行)。由于k8s已无法通知离线的节点来删除该pod，所以可以手动强制删除```kubectl delete po xxx --force --grace-period 0```。
+
+## k8s 架构
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-03-22-35-09.png)
+
+API server对外暴露了ComponentStatus接口，可以使用 ```kubectl get componentstatuses``` 查询。
+
+> k8s各个组件间只能通过API server进行通信，组件间不会直接通信。包括访问etcd也需要通过api server。
+> Control panel上的组件可以分散到多台服务器上，每个组件也可以运行多个实例保证高可用。其中etcd和api server可以多实例同时运行，scheduler和controller manager只能有一个实例在运行，其它实例待命。
+> Control panel上的组件以及kube-proxy可以直接部署在系统上，也可以作为pod来运行。kubelet是唯一一个以系统组件来运行的，由kubelet来运行pod。所以要把control panel作为pod来运行的话，需要把kubelet部署在master上。
+
+### etcd
+
+1. k8s 使用etcd来持久化信息，包括pod、replicaSet、service等等。只有api server可以和etcd通信。
+2. api server 使用乐观锁(OptimisticLock)控制对etcd数据的更新，每个对象上含有一个metadata.resourceVersion字段。
+3. 多个etcd使用 RAFT 一致性算法来达成一致。
+4. etcd实例应该是奇数。因为只有超过总数半数的实例在线才能达成共识，所以2个实例比1个实例更糟，挂掉的概率增加了一倍。比如4个节点，需要3个节点(超过4的半数2)在线。
+
+> 乐观锁：取数据的时候都认为别人不会修改，不锁。更新数据的时候，先检查更新前的版本和自己之前读取的版本是否一致，一致则更新，否则重新读取。本质是CAS(Compare and Swap)。
+> 悲观锁：很悲观，取数据的时候认为别人会修改，所以取数据要上锁。
 
 ## K8s tips
 
