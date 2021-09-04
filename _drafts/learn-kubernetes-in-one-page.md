@@ -1069,6 +1069,42 @@ API server对外暴露了ComponentStatus接口，可以使用 ```kubectl get com
 > 乐观锁：取数据的时候都认为别人不会修改，不锁。更新数据的时候，先检查更新前的版本和自己之前读取的版本是否一致，一致则更新，否则重新读取。本质是CAS(Compare and Swap)。
 > 悲观锁：很悲观，取数据的时候认为别人会修改，所以取数据要上锁。
 
+### api server
+
+以restful api提供对集群状态的CRUD操作，数据保存在etcd中。api server会对客户端身份做认证、授权，校验数据对象，对更新提供乐观锁处理的功能。
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-04-16-31-27.png)
+
+可以配置一个或者多个插件，来对操作进行认证、授权、准入控制。
+
+#### 资源变更的监控
+
+客户端到api server来监听在etcd上配置的变更，有变更时api server会通知客户端。```kubectl get po --watch```就可以监听pod的变化。
+
+### Controller manager
+
+工作流程：
+
+1. 调度器来决定pod运行在哪个节点，调度器连接api server并监听，等待创建新pod。
+2. 决定在某个节点上创建新pod，并更新api server上的pod定义。
+3. kubelet通过api server知道pod被调度到自己的节点，于是创建容器。
+
+Controller manager里有多种controller，包括ReplicaSet、DaemonSet controller，node controller, service controller, persistent volume controller...这些控制器之间不会直接通信，都和api server通信。
+
+### Kubelet
+
+工作流程：
+
+1. 连接api server创建一个node资源来注册本节点。
+2. watch api server是否给本节点分配pod，若分配则启动pod容器。
+3. 监控本地运行的容器，向api server报告它们的状态、事件和资源消耗。
+4. 容器出错时，重启容器
+5. pod从api server中删除时，kubelet终止容器，并通知api server该pod已被终止。
+
+kubelet可以从api server获得需要运行的pod，也可以通过指定本地目录下的pod清单来运行pod。
+
+
+
 ## K8s tips
 
 ### Centralized Logging (EFK)
