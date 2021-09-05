@@ -1091,6 +1091,10 @@ API server对外暴露了ComponentStatus接口，可以使用 ```kubectl get com
 
 Controller manager里有多种controller，包括ReplicaSet、DaemonSet controller，node controller, service controller, persistent volume controller...这些控制器之间不会直接通信，都和api server通信。
 
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-05-19-15-34.png)
+
+可以看出前面的操作都在controller panel中进行，可通过 ```kubectl get events --watch``` 查看事件。
+
 ### Kubelet
 
 工作流程：
@@ -1102,6 +1106,23 @@ Controller manager里有多种controller，包括ReplicaSet、DaemonSet controll
 5. pod从api server中删除时，kubelet终止容器，并通知api server该pod已被终止。
 
 kubelet可以从api server获得需要运行的pod，也可以通过指定本地目录下的pod清单来运行pod。
+
+#### pod内会多创建一个container来保证Linux命名空间不变
+
+当pod运行时，首先会创建一个基础的container（COMMAND执行了pause），该容器通常和pod的生存周期相同，该容器的目的是确保这个pod运行后有一致的Linux namespace。因此，pod内有多个容器，或者容器在pod中被重启，也能保证他们有一致的命名空间。
+
+
+
+### kube-proxy
+
+每个工作节点上除了有kubelet，还要运行kube-proxy。kube-proxy确保对service或者pod的访问都可以到达。
+
+kube-proxy有两种代理模式：
+
+1. userspace proxy。客户端->iptables(kube-proxy配置iptables)->kube-proxy->pod。
+2. iptables proxy。客户端->iptables(kube-proxy配置iptables)->pod。这种模式，数据包不经过kube-proxy。
+
+userspace proxy，对性能影响大，它以轮询模式选择pod做load balance。iptables proxy，随机选择pod。
 
 
 
