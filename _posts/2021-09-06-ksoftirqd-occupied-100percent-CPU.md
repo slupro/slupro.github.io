@@ -45,7 +45,7 @@ RPS works in Linux kernel to distribute NIC interrupts to multiple CPUs. RFS is 
 
 Just list the steps I did:
 
-1. Before set RPS manually, disable irqbalance service.
+1. Disable irqbalance service.
 
 ```
 # systemctl stop irqbalance
@@ -58,7 +58,7 @@ Just list the steps I did:
 # echo "0-23" > /proc/irq/11/smp_affinity_list
 ```
 
-Alternatively, you could set the smp_affinity by hex value. We can check the last command by ```cat /proc/irq/11/smp_affinity```, and get "ffffff".
+* Alternatively, you could set the smp_affinity by hex value. We can check the last command by ```cat /proc/irq/11/smp_affinity```, and get "ffffff".
 
 3. Configure RPS. "ffffff" is a bitmap of CPUs.
 
