@@ -1124,7 +1124,78 @@ kube-proxy有两种代理模式：
 
 userspace proxy，对性能影响大，它以轮询模式选择pod做load balance。iptables proxy，随机选择pod。
 
+> kube-proxy使用iptables来转发数据包
 
+* 监控 service 的创建
+
+当创建service时，虚拟IP地址就会分配给service。之后API服务器会通知所有在节点上的kube-proxy客户端有个新服务已经被创建了。然后，每个kube-proxy都会让该服务在自己的节点上可寻址。原理是通过创建iptables规则，确保每个目标为service的IP/端口被修改为支持服务的pod上。
+
+* 监控 Endpoint 对象
+
+监控 Endpoint 来保证kube-proxy知道如何转发数据包到pod上。
+
+### control panel 中组件挂掉时的选举
+
+选举时，这些组件不需要互相通信。领导者的选举方式是大家都尝试在api server创建一个endpoint对象，其中包含leader/holderIdentity字段指向自己，成功写入的就成为领导者。api server的乐观锁保证了并发只有一个会成功。
+
+多control panel或多组件时，领导者负责更新资源。当领导者宕机，其它组件发现资源超时也没有更新，就尝试将自己写到api server中成为领导者。
+
+## k8s的安全防护
+
+### 认证和授权
+#### Authentication
+
+pod使用ServiceAccount来表明自己的身份，一个ServiceAccount可以被多个pod使用。SA也是和Pod、ConfigMap等一样都是资源，每个namespace会有一个默认的ServiceAccount。
+
+```
+# 创建SA
+kind: ServiceAccount
+metadata:
+    name: mysa
+
+# SA分配给pod
+kind: Pod
+spec:
+    serviceAccountName: mysa
+```
+
+#### Authorization
+
+k8s里包括一些授权插件，包括RBAC，ABAC(基于属性的访问控制)，WebHook插件等。
+
+* RBAC中的Role和ClusterRole定义了可以在哪些资源上执行什么操作。
+* RoleBinding 和 ClusterRoleBinding 将Role和ClusterRole绑定在用户、组和ServiceAccount。
+
+### 命名空间ns
+
+pod中的容器有自己的network ns, PID ns, IPC ns。
+
+#### pod使用宿主节点的network ns
+
+pod中的容器可直接看到和使用宿主节点的网络信息。
+
+```
+kind: Pod
+spec:
+    hostNetwork: true
+```
+
+#### pod只绑定宿主节点的端口，而不用宿主节点的整个network ns
+
+通过配置pod的spec.containers.ports字段中，某容器的hostPort属性来实现。这时，到达宿主节点该端口的连接会直接转发到pod的对应端口上。
+
+```
+# 可以通过pod IP的8080访问，也可以通过节点的9090访问。
+kind: Pod
+spec:
+    containers:
+        ports:
+        -   containerPort: 8080
+            hostPort: 9090
+```
+
+> 注意和 Service 的 NodePort 的区别，NodePort会将连接转发到随机选取的pod上，不管pod是不是在本节点。
+> 由于指定的端口会占用宿主机的端口，所以一个节点只能运行一个绑定某端口的pod，需要多个pod时，调度器会自动在其它节点上启动该pod，如果无多余的节点，则pod会pending。
 
 ## K8s tips
 
