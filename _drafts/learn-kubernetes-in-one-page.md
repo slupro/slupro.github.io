@@ -1385,6 +1385,174 @@ ingress:
             cidr: 192.168.0.0/24
 ```
 
+## 对资源的管理
+
+创建pod时，可以指定其中容器对CPU和内存的最小要求（requests），以及最大限制（limits）。kubelet会向API server报告节点相关数据。
+
+```
+# 查看节点资源总量和已分配情况
+kubectl describe nodes
+```
+
+### 为pod中的容器做资源分配
+
+#### requests设置容器的最小的需求
+
+requests的作用：
+
+1. 保证了该容器需要使用的最小资源。避免容器部署在资源不够的节点上。如果节点上可分配（注意不是可用）的资源小于requests的要求，则pod不会分配到该节点。比如已经有容器requests了80%的总CPU，哪怕实际只用了60%，也不会在该节点上部署requests 25%的pod。
+2. 当容器都全力使用CPU时，CPU用量会按照各个容器的requests的比例来分配。
+
+```
+# CPU指定为200毫核，即一个CPU core的1/5.
+# memory申请100MB。
+kind: pod
+spec:
+    containers:
+    -   image: test
+        resources:
+            requests:
+                cpu: 200m
+                memory: 100Mi
+```
+
+> 调度器在调度时，可根据参数设置优先级：
+> LeastRequestedPriority，优先将pod调度到requests少的节点。
+> MostRequestedPriority，优先将pod调度到requests多的节点。可充分利用节点，释放不使用的节点以节省资金。
+
+#### limits设置容器的最大使用量
+
+> CPU是可压缩的资源，某个容器占用CPU高了，我们可以限制它的CPU用量。
+> 内存是不可压缩资源，如果进程申请了内存，除非主动释放，否则操作系统也不能让它主动释放内存（除非kill）。所以对内存进行限制，避免了单个pod故障导致整个节点不可用。
+
+limits的特点：
+
+1. 与requests不同，limits不受节点可分配资源量的限制，也就是可以超卖。
+2. 对CPU的限制，仅仅会让该容器分配不到比限额更多的CPU资源。
+3. 当进程尝试申请比限额更多的内存时，会被OOM kill。k8s会尝试重启，如果继续失败，会增加下次重启的时间间隔，从20s一直几何倍数增加到300s。
+4. 当然如果节点资源总量超过100%，一些容器会被kill。
+
+> 注意：在pod内的容器，看到的CPU和内存数量是节点的，并不是limits后的。所以应用不能根据查询到的CPU和内存无限的申请用量。
+
+```
+# CPU最大不能超过1 core
+# 由于没有指定requests，所以requests将会设置为和limits相同的值。
+kind: pod
+spec:
+    containers:
+    -   image: test
+        resources:
+            limits:
+                cpu: 1
+                memory: 100Mi
+```
+
+### pod的QoS
+
+由于limits设置的可以超卖，所以k8s有可能依据QoS选择pod kill掉。根据容器requests和limits的设置情况，将pod分为3个QoS等级：
+
+1. BestEffort（优先级最低）：没有配置requests和limits的pod，当资源不够时，最先被kill。
+2. Guaranteed（优先级最高）：pod中的每个容器都设置了requests和limits，并且他们的值相同。
+3. Burstable：除了前两种的其它pod。
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-12-13-07-22.png)
+
+> 当容器的QoS等级相同时，根据OOM分值kill掉分值高的pod。比如A requests 100MB，B requests 200MB，A实际用量150MB，B实际用量280MB，A先被kill，因为A超过它requests的比例更高。
+
+### 为命名空间的pod设置使用量
+
+#### LimitRange 
+
+LimitRange设置ns中requests和limits的默认值，以及最大最小值。避免了需要为每个pod设置资源限制。只有在LimitRange范围内的pod，才可以在该ns中被创建。但LimitRange只影响apply后创建的pod，对已创建的pod不影响。
+
+```
+# 可以设置Pod、container和PVC。
+# maxLimitRequestRatio 指定request和limit的最大比例。
+kind: LimitRange
+spec:
+    limits:
+    -   type: Pod
+        min:
+            cpu: 50m
+            memory: 100Mi
+        max:
+            cpu: 1
+            memory: 1Gi
+    -   type: Containers
+        defaultRequest:
+            cpu: 100m
+            memory: 10Mi
+        default:
+            cpu: 500m
+            memory: 200Mi
+        min:
+            cpu: 50m
+            memory: 100Mi
+        max:
+            cpu: 1
+            memory: 1Gi
+        maxLimitRequestRatio:
+            cpu: 4
+            memory: 5
+    -   type: PersistentVolumeClaim
+        min:
+            storage: 1Gi
+        max:
+            storage: 10Gi
+```
+
+#### ResourceQuota
+
+ResourceQuota可限制ns中所有pod允许使用的CPU、内存、PVC总量，以及可创建的对象数量。使用```kubectl describe quota```查看配额使用情况。
+
+```
+# scopes设置quota的生效范围，比如BestEffort Qos的，以及没有有效期的pod上。
+kind: ResourceQuota
+spec:
+    scopes:
+    -   BestEffort
+    -   NotTerminating
+    hard:
+        requests.cpu: 500m
+        requests.memory: 100Mi
+        limits.cpu: 2
+        limits.memory: 500Mi
+        requests.storage: 1Ti
+        pods: 10
+        secrets: 20
+        persistentvolumeclaims: 5
+        services: 8
+        services.loadbalancers: 1
+```
+
+### 监控资源使用量
+
+为了合理的设置requests和limits，需要监控pod的资源使用量。
+
+#### 收集、获取资源使用情况
+
+kubelet中包含了一个 cAdvisor 的agent，会收集本节点和容器的资源消耗情况。可以在集群中运行一个 Heapster 组件来统计整个集群的监控信息。
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-12-15-34-26.png)
+
+在Heapster运行了一会儿后，就可以通过下面的一些命令来获取信息：
+
+```
+# 节点CPU和内存实际使用量，注意kubectl describe node看的是节点CPU和内存的requests和limits
+kubectl top node
+
+# pod CPU和内存的实际使用量
+kubectl top pod --all-namespaces
+
+# minikube需要安装插件
+minikube addons enable heapster
+```
+
+#### 持续监控历史资源使用的统计信息
+
+cAdvisor 和 Heapster 都只保存短时间内的数据，如果需要长时间的数据，可以用 InfluxDB 来储存数据，Grafana 对数据进行可视化和分析。
+
+InfluxDB 和 Grafana 可以用docker方式运行。
 
 
 ## K8s tips
