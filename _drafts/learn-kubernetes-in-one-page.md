@@ -1197,6 +1197,196 @@ spec:
 > 注意和 Service 的 NodePort 的区别，NodePort会将连接转发到随机选取的pod上，不管pod是不是在本节点。
 > 由于指定的端口会占用宿主机的端口，所以一个节点只能运行一个绑定某端口的pod，需要多个pod时，调度器会自动在其它节点上启动该pod，如果无多余的节点，则pod会pending。
 
+#### pod使用宿主节点的PID和IPC ns
+
+* pod spec.hostPID为true时，pod内的容器可以看到宿主的全部进程信息。
+* pod spec.hostIPC为true时，pod内的容器可以使用IPC和宿主的进程通信。
+
+```
+kind: Pod
+spec:
+    hostPID: true
+    hostIPC: true
+```
+
+### security-context对pod容器进行更细粒度的控制
+
+容器运行使用的用户可以在Dockerfile中通过USER来指定。如果没有指定，也没有配置security-context时，pod中的容器默认以root用户、root组运行。
+
+#### 指定用户运行容器
+
+```
+# runAsUser指定一个用户ID，不是用户名
+kind: Pod
+spec:
+    containers:
+        securityContext:
+            runAsUser: 405
+```
+
+#### 指定非root用户运行容器
+
+避免镜像被攻击后，运行恶意镜像，所以可以指定非root用户运行容器。
+
+```
+kind: Pod
+spec:
+    containers:
+        securityContext:
+            runAsNonRoot: true
+```
+
+#### 特权模式运行pod
+
+pod此时可以在宿主机上做任何事情，比如kube-proxy就可以修改宿主机的iptables。特权模式的pod可以看到宿主机的/dev，所以也就可以访问到宿主机的所有设备。
+
+```
+kind: Pod
+spec:
+    containers:
+        securityContext:
+            privileged: true
+```
+
+#### 为容器指定可支持的内核功能
+
+privileged=true 给pod的权限太大，可以指定个别的内核功能给pod。
+
+```
+# 该pod可以修改系统时间。需要把内核功能的 CAP_SYS_TIME 去掉 CAP_ 前缀。
+# add 添加功能，drop 去掉默认有的功能，比如chown文件的权限。
+kind: Pod
+spec:
+    securityContext:
+        capabilities:
+            add:
+            -   SYS_TIME
+            drop:
+            -   CHOWN
+```
+
+#### 阻止容器对自己的根文件系统进行写入操作
+
+```
+kind: Pod
+spec:
+    containers:
+        securityContext:
+            readOnlyRootFilesystem: true
+```
+
+### PodSecurityPolicy 进行集群级别的安全设置
+
+PodSecurityPolicy 资源无命名空间，定义了能否在pod中使用某种安全相关的特性。PodSecurityPolicy插件需要安装才可使用。
+
+```
+# 容器不允许使用宿主IPC、PID、Network namespace
+# 容器只能使用10000-11000之间端口
+# 容器不能在特权模式下允许
+# 容器可以以任意用户、组运行
+# 容器可以使用任何SELinux选项
+kind: PodSecurityPolicy
+spec:
+    hostIPC: false
+    hostPID: false
+    hostNetwork: false
+    hostPorts:
+    -   min: 10000
+        max: 11000
+    privileged: false
+    readOnlyRootFilesystem: true
+    runAsUser:
+        rule: RunAsAny
+    fsGroup:
+        rule: RunAsAny
+    supplementalGroups:
+        rule: RunAsAny
+    seLinux:
+        rule: RunAsAny
+```
+
+### pod的网络隔离
+
+NetworkPolicy可以用标签选择器来匹配pod，或者用CIDR指定IP段，然后指定哪些ingress或者egress允许。
+
+> 集群中的CNI或者网络方案需要支持NetworkPolicy。
+
+#### 在一个ns中启用网络隔离
+
+默认情况下，pod可以被任意来源访问。可以启用对ns中所有pod的网络隔离，阻止所有访问。
+
+```
+# podSelector 的value为空，则匹配ns中的所有pod
+kind: NetworkPolicy
+spec:
+    podSelector:
+```
+
+#### 对同一个ns中pod的访问
+
+```
+# 标签app=mydb的pod只允许标签app=myapp的pod，且只能访问3306端口。myapp可直接或通过Service访问到mydb。
+kind: NetworkPolicy
+spec:
+    podSelector:
+        matchLabels:
+            app: mydb
+    ingress:
+    -   from:
+        -   podSelector:
+                matchLabels:
+                    app: myapp
+        ports
+        -   port: 3306
+```
+
+#### 不同ns中pod的访问
+
+将上面的 podSelector 变成了 namespaceSelector 来选择指定的ns。
+
+```
+kind: NetworkPolicy
+spec:
+    podSelector:
+        matchLabels:
+            app: mydb
+    ingress:
+    -   from:
+        -   namespaceSelector:
+                matchLabels:
+                    tenant: xxx
+        ports
+        -   port: 3306
+```
+
+#### 限制pod的outbound流量
+
+```
+# pod aaa，只能访问pod bbb
+kind: NetworkPolicy
+spec:
+    podSelector:
+        matchLabels:
+            app: aaa
+    egress:
+    -   to:
+        -   podSelector:
+                matchLabels:
+                    app: bbb
+```
+
+#### 使用CIDR限制
+
+```
+# 指明了inbound rule，来自192.168.0.0/24
+ingress:
+-   from:
+    -   ipBlock:
+            cidr: 192.168.0.0/24
+```
+
+
+
 ## K8s tips
 
 ### Centralized Logging (EFK)
