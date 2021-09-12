@@ -1554,6 +1554,36 @@ cAdvisor 和 Heapster 都只保存短时间内的数据，如果需要长时间�
 
 InfluxDB 和 Grafana 可以用docker方式运行。
 
+## pod和节点的自动伸缩
+
+### pod的横向自动伸缩 (scale out)
+
+pod的横向auto scale由Horizontal controller执行，通过创建 HorizontalPodAutoscaler(HPA)来配置和启用。
+
+#### HPA流程
+
+利用 cAdvisor 获取pod的信息，Heapster汇集，HPA从Heapster获取信息，计算后更新Deployment。
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-12-23-13-17.png)
+
+#### 基于CPU使用率自动伸缩
+
+要使用HPA，必须给pod设置CPU requests，这样HPA才能衡量CPU使用率。可以使用yaml定义资源，或者命令行直接修改。
+
+HPA衡量的CPU使用率 = 容器的CPU实际使用率 / 设置的CPU requests
+
+```
+# autoscaler会调整副本的数量，使cpu使用率接近30%
+kubectl autoscale deployment xxx --cpu-percent=50 --min=1 --max=5
+
+# 查看HPA
+kubectl get hpa
+kubectl describe hpa
+```
+
+> 伸缩操作的速率限制：单次扩容操作最多让当前副本数翻倍。两次扩容间也有时间限制，比如3分钟内没有伸缩操作才会扩容，5分钟内没有伸缩操作才会缩容。
+
+#### 基于内存使用进行自动伸缩
 
 ## K8s tips
 
