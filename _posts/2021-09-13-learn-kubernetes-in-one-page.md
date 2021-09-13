@@ -1,3 +1,13 @@
+---
+layout: post
+title:  "Kubernetes 学习笔记"
+subtitle:   "Learn kubernetes in one page"
+date:   2021-09-13 12:00:00 +10:00
+author: "Steven Lu @slupro"
+categories: [学习笔记]  # up to 2.
+tags: [kubernetes, cloud]  # TAG names should always be lowercase, 0 to infinity.
+---
+
 ## 介绍
 
 学习《kubernetes in action》时做的笔记，书中使用的k8s的版本和目前的版本有差距，但大体概念没有变。转载请注明来自：https://slupro.github.io/
