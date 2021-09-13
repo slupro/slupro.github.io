@@ -1,5 +1,7 @@
 ## 介绍
 
+学习《kubernetes in action》时做的笔记，书中使用的k8s的版本和目前的版本有差距，但大体概念没有变。转载请注明来自：https://slupro.github.io/
+
 ### k8s的需求
 
 1. 从单一应用到微服务：满足可横向和纵向扩展的需求，聚焦于总的资源池。
@@ -1558,7 +1560,7 @@ InfluxDB 和 Grafana 可以用docker方式运行。
 
 ### pod的横向自动伸缩 (scale out)
 
-pod的横向auto scale由Horizontal controller执行，通过创建 HorizontalPodAutoscaler(HPA)来配置和启用。
+pod的横向auto scale由Horizontal controller执行，通过创建 HorizontalPodAutoscaler(HPA)来配置和启用。可基于CPU、内存、其它metrics来实现自动伸缩。
 
 #### HPA流程
 
@@ -1583,9 +1585,218 @@ kubectl describe hpa
 
 > 伸缩操作的速率限制：单次扩容操作最多让当前副本数翻倍。两次扩容间也有时间限制，比如3分钟内没有伸缩操作才会扩容，5分钟内没有伸缩操作才会缩容。
 
-#### 基于内存使用进行自动伸缩
+#### 其它metrics
 
-## K8s tips
+可基于每秒查询次数（QPS）、平均响应时间，等等进行自动缩放。
+
+```
+kind: HorizontalPodAutoscaler
+spec:
+    maxReplicas: 5
+    minReplicas: 1
+    metrics:
+    -   type: Pods
+        resource:
+            name: qps
+            targetAverageValue: 100
+```
+
+#### 缩容到0副本？
+
+目前HPA不支持缩容到0副本。也就是当没有请求的时候，缩容到0副本，有请求来时先被阻塞，直到pod启动，再转发请求到新pod上。未来k8s也许会支持。
+
+### pod纵向缩放和节点的横向伸缩
+
+* pod纵向缩放，需查文档看k8s有没有实现，目前只能用替代方案。
+* 节点的横向伸缩，需要云服务商的支持，目前GKE、GCE、Azure、AWS都支持节点的横向伸缩。
+
+## 高级调度
+
+### Taints 和 Tolerations
+
+节点可以表明自己的污染度(Taints)，pod可以表明自己的容忍度(Tolerations)，符合条件的pod才会被部署到节点上。节点选择器虽然也有这样的功能，但是Taints可以在不修改已有pod信息的前提下，通过修改节点信息，来拒绝pod在某些节点上的部署。
+
+比如集群的主节点上设置了Taints，保证只有control panel pod可以部署在主节点上。
+
+pod的污染容忍度可以指定对污染的效果：
+
+1. NoSchedule：0容忍，pod不会调度到有这些污染的节点上。
+2. PreferNoSchedule：是NoSchedule的宽松版本，尽量不调度到有这些污染的节点上，但如果没有别的节点，也会被调度上去。
+3. NoExecute：前两者只在调度期间起作用，NoExecute会把节点上正在运行的pod去除。
+
+### 亲缘性affinity
+
+#### 节点亲缘性
+
+虽然nodeSelector可以指定pod被调度到哪种节点上去，但是affinity更强大，可以指定pod对节点的硬性限制，或者偏好。
+
+```
+kind: pod
+spec:
+    affinity:
+        nodeAffinity:
+            ...
+```
+
+#### pod亲缘性
+
+pod亲缘性可以把前端pod和后端pod部署的尽量靠近。可以使用 matchLabels 和 matchExpressions 来匹配。requiredDuringSchedulingIgnoredDuringExecution 和 preferredDuringSchedulingIgnoredDuringExecution。
+
+```
+# 部署的pod必须被调度到匹配的pod选择器的节点上。
+kind: Deployment
+spec:
+    replicas: 5
+    template:
+        ...
+        spec:
+            affinity:
+                podAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                    -   topologyKey: ...
+                        labelSelector:
+                            matchLabels:
+                                app: backend
+```
+
+#### pod非亲缘性
+
+希望pod彼此远离的时候，就把 podAffinity 字段换成 podAntiAffinity。目的之一是避免在同一个节点上影响性能，之二是部署在不同节点满足高可用性的需求。
+
+## Best practice
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-13-12-38-22.png)
+
+上图是一个典型的k8s应用环境：
+
+1. 提供服务的pod通过 service 来暴露自己。集群外访问时，可以将service配置为 LoadBalancer 或者 NodePort 类型的，也可以通过 Ingress 资源来开放服务。
+2. pod 模板通常会引用两种类型的Secret，一种用于从镜像仓库拉取镜像，另一种是pod中的进程使用的。Secret应由运维团队来配置，分配给 ServiceAccount，然后 SA 会被分配给pod。
+3. 一个应用也会包含一个或者多个 ConfigMap 对象，可以用 key value 来初始化环境变量，也可以在pod中以 configMap卷 来挂载。需要数据持久化的pod还需要 PVC卷。
+4. 一个应用可能会有 Jobs 和 CronJobs。DaemonSet通常由系统管理员创建，部署在各个节点上。
+5. 水平pod缩放（HorizontalPodAutoscaler）可由开发者或者运维团队配置。集群管理员可设置LimitRange和ResourceQuota，以控制每个pod和所有pod的资源使用情况。
+6. 资源通常会有多个标签，还应该有描述资源的注解，列出负责该资源的人员和团队的联系信息。
+
+### pod的生命周期
+
+#### 应用开发者的注意事项
+
+由于pod可能被k8s杀死或者重新调度，所以应用开发者需要注意：
+
+1. 预料到本地IP和主机名会发生变化。如果要依赖主机名，必须使用StatefulSet。
+2. 预料到写入容器磁盘的数据会消失。即使pod没有重新建，但容器重建，也会创建新的writable layer。需持久化的数据需要保存在PV中。应用需注意PV中的数据损坏，导致容器不停崩溃。
+
+#### 控制pod的启动顺序
+
+虽然在一个yaml文件中定义所有的pod，也是按顺序发给api server的，但无法保证哪个先启动。
+
+控制启动顺序的方法：
+
+1. init容器：一个pod内可以包括多个init容器来完成初始化的工作，只有init容器运行结束后才会启动主容器。
+2. 使用 Readiness 探针检查依赖的pod。
+
+```
+# 使用initContainers来定义init容器。
+spec:
+    initContainers:
+    -   name: init
+        image: xxx
+        command:
+        -   sh
+        -   -c
+        -   'sleep 5;'
+```
+
+#### 容器启动后(Post-start)和停止前(Pre-stop)的钩子
+
+init容器是对应整个pod。此外可以在容器启动后和停止前添加钩子。
+
+> 这里的钩子并不会在容器完全启动后才运行，而是和主进程并行执行。在钩子执行完毕之前，容器一直停留在Waiting状态，pod的状态会是Pending，而不是Running。如果钩子运行失败或者返回了非 0 的状态码，主容器会被kill。
+
+```
+# 使用postStart和preStop来定义
+kind: pod
+spec:
+    containers:
+    -   image: xxx
+        lifecycle:
+            postStart:
+                exec:
+                    command:
+                    -   sh
+                    -   -c
+                    -   "sleep 5;"
+```
+
+#### pod的终止
+
+当kubelet意识到需要终止pod时，它开始终止pod中的每个容器。kubelet会给每个容器一定的时间来终止（Termination Grace Period），可在pod spec中的 spec.terminationGracePeriod 的Periods字段来为每个容器设置不同值，默认为30s。
+
+![](/assets/img/learn-kubernetes-in-one-page/2021-09-13-16-07-23.png)
+
+其中kubelet终止pod的流程：
+
+1. 如果有 PreStop，执行它，并等待执行完毕。
+2. 向容器主进程发送 SIGTERM 信号。
+3. 等待容器关闭或者等待终止期限超时。
+4. 如果容器没有主动关闭，使用 SIGKILL 强制终止进程。
+
+> 注意容器收到 SIGTERM 时，并不意味着pod一定会被终止，有可能只是重启其中的容器。
+> kube-proxy很有可能收到的通知比kubelet收到的通知晚，导致容器已经停止服务了，之后kube-proxy才修改iptables，这样在中间的请求会收到access deny之类的错误。为了避免这样的问题，可以在容器的preStop里sleep几秒，这样iptables会先修改完，容器才会关闭。
+
+### 让应用在k8s里方便运行和管理
+
+* 衡量镜像最小化和方便使用的关系。只有可执行持续的镜像让第一次部署就很快，但是没有常用命令方便调试。
+* 镜像尽量指定版本。用latest可能让版本不受控制，不同的pod运行了不同的版本。
+* 给所有的资源都打上标签。标签可以包含：资源所属的应用名称，应用层级（前后端等），运行环境（开发、测试、预发布、生产），版本号，发布类型（稳定、canary、蓝绿等），租户等。
+* 给资源加上注解。包括资源描述和负责人。
+
+## 开发和测试的best practice
+
+### 开发过程中在k8s之外运行应用
+
+开发阶段，并不需要每次做完小的修改后都build docker，然后推送到registry，再deploy。
+
+* 可以通过环境变量来连接后台的服务。
+* 如果使用 ServiceAccount 来验证，可以把 SA 的secret文件用```kubectl cp```复制到本地。或者在本地运行kubelet proxy。
+* 开发过程中需要在容器内部运行时，可以把本地目录通过docker的volume挂载到容器中，这样应用有新的build时，重启容器就可以，不需要重新构建整个镜像。
+
+### 使用minikube进行开发
+
+可以将自己的shell指向minikube的docker-daemon。这样构建完镜像，不用再去推送镜像，它已存储在Minikube VM中，可直接使用该镜像。
+
+```
+eval $(minikube docker-env)
+```
+
+### CI/CD
+
+网上有很多资源，可以考虑 Fabric8 的项目。
+
+## k8s应用扩展
+
+### 自定义资源 CustomResourceDefinition (CRD)
+
+如果添加一个服务需要定义Deployment、Service、ConfigMap等，步骤很繁琐，对重复操作，可以使用 CRD。
+
+```
+# 定义CRD
+kind: CustomResourceDefinition
+spec:
+    scope: Namespaced
+names:
+    kind: website
+    ...
+```
+
+定义了CRD后，则可使用上面定义的website作为kind类型创建资源。
+
+### RedHat的Openshift
+
+(内容待补充)
+
+### Helm
+
+(内容待补充)
 
 ### Centralized Logging (EFK)
 
@@ -1595,9 +1806,7 @@ EFK(Elasticsearch, Fluentd, Kibana)
 * Kibana: a robust knowledge visualization frontend, and dashboard for Elasticsearch.
 * Fluentd: gather, transform, and ship logs knowledge to the Elasticsearch backend.
 
-### 坑
-
-1. 服务的集群IP是虚拟IP，因此无法 PING 通，可以通过 IP+开放的端口 来确认。
+## K8s tips
 
 ### k8s修改资源的方式
 
@@ -1655,4 +1864,10 @@ kubectl edit ...
 kubectl run centos --image=centos -- sleep infinity
 kubectl exec centos -- ls
 kubectl delete po centos
+```
+
+在本机和容器间相互传送文件
+```
+kubectl cp foo-pod:/container/aaa /local/aaa
+kubectl cp foo-pod:/container/aaa /local/aaa -c container_name
 ```
