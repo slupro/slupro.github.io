@@ -39,7 +39,9 @@ Cannot get device channel parameters
 : Operation not supported
 ```
 
-It looks this KVM was not set to support multiple channels on NIC, or the physical NIC can't support multiple channels. Irqbalance service is running, but it seems irqbalance can't handle this case. We need to distribute the NIC interrupts manually by using Receive Packet Steering(RPS) and Receive Flow Steering(RFS).
+It looks the driver of NIC didn't support multiple channels. Otherwise, we can use ```ethtool -L ens3 combined 8``` to change channels, which means 8 cpu could handle soft irq. 
+
+Irqbalance service is running, but it seems irqbalance can't handle this case. We need to distribute the NIC interrupts manually by using Receive Packet Steering(RPS) and Receive Flow Steering(RFS).
 
 RPS works in Linux kernel to distribute NIC interrupts to multiple CPUs. RFS is to increase datacache hitrate by steering kernel processing of packets to the CPU where the application thread consuming the packet is running. The full document about network scaling could found at https://www.kernel.org/doc/Documentation/networking/scaling.txt.
 
