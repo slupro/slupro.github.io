@@ -40,3 +40,25 @@
 | pulling延迟和开销 | 近实时，有一定性能开销 | 教实时，性能开销小 |
 | 应用侵入性 | 有 | 无 |
 | 使用场合 | 早期/中小规模 | 中大规模，有独立团队治理维护 |
+
+### 数据聚合join的问题
+
+分布式系统数据聚合的问题，实际上是Aggregator或者Backend for Frontend(BFF)的问题。
+
+#### Command Query Responsibility Segregation(CQRS)
+
+CQRS是服务层的读写分离。Command改变数据/状态，Query不会改变数据/状态。具体实现手段主要依赖消息队列、事务性发件箱或者变更数据捕获(CDC)。
+
+![](/assets/img/distributed-system-design/2021-10-04-17-11-56.png)
+
+> CQRS会存在数据延迟，只满足最终一致性。
+
+由于有延迟，所以UI可以使用一些更新策略：
+
+1. 乐观更新 Optimistic update：UI在用户操作后不用等后台返回，即更新UI。
+2. 拉模式 Pull：UI请求时带一个版本号，直到后台返回的数据版本号和请求的版本号一致。
+3. publish-subscribe：通过websocket等通知UI更新页面。
+
+### 分布式事务
+
+
