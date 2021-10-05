@@ -61,4 +61,47 @@ CQRS是服务层的读写分离。Command改变数据/状态，Query不会改变
 
 ### 分布式事务
 
+#### 事务的要求 ACID
 
+1. Atomicity: 要么全部发生，要么全部不发生。All or Nothing.
+2. Consistency: 数据始终处于合法状态。
+3. Isolation: 并发操作的可见性。
+4. Durability: 变更持久化。
+
+#### 分布式中事务的处理原则
+
+需要考虑下来事项：
+
+1. 假定网络或服务不可靠
+2. 将全局事务建模成一组本地ACID事务
+3. 引入事务补偿机制处理失败场景
+4. 事务始终处于一种明确的状态（成功或失败）
+5. 最终一致性
+6. 考虑隔离性
+7. 考虑幂等性 idempotence
+8. 异步响应，避免直接同步调用
+
+#### 2PC/XA
+
+两阶段提交，The open group定义了XA规范。但存在性能低、实现复杂、deadlock、扩展性等问题。NoSQL、kafka等很多不支持2PC协议，所以应尽量避免使用。
+
+1. Preparation phase
+2. Commit or rollback phase
+
+![](/assets/img/distributed-system-design/2021-10-05-11-24-41.png)
+
+#### Try, Commit and Cancel(TCC)
+
+TCC是2PC的一种变体，可以认为是服务层的2PC。流程：
+
+1. 业务应用启动事务。
+2. 业务应用调用Try接口，Try通常会执行资源预留的动作，比如机票、酒店预留。
+3. 根据情况，调用Commit或者Cancel。
+
+![](/assets/img/distributed-system-design/2021-10-05-11-30-29.png)
+
+#### Saga
+
+Saga模式，也是使用一种补偿机制，使用状态机来表示各个状态。
+
+![](/assets/img/distributed-system-design/2021-10-05-12-35-11.png)
