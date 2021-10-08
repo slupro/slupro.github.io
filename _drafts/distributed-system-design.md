@@ -105,3 +105,8 @@ TCC是2PC的一种变体，可以认为是服务层的2PC。流程：
 Saga模式，也是使用一种补偿机制，使用状态机来表示各个状态。
 
 ![](/assets/img/distributed-system-design/2021-10-05-12-35-11.png)
+
+#### 业界实践（推荐Cadence）
+
+1. 阿里的 Seata 通用分布式事务框架：Seata 是2PC/XA的一个改进版本，可以支持AT Mode(推荐), TCC, Saga, Even XA, Hybrid AT&TCC。
+2. Uber的微服务编排引擎Cadence：Golang实现，提供了java和golang的接口。
