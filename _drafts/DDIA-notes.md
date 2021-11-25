@@ -90,3 +90,18 @@ The log-structured indexes we saw earlier break the database down into variable-
 
 ![](/assets/img/DDIA-notes/2021-11-23-22-57-53.png)
 
+> 使B-Tree可靠，需要考虑的问题
+
+* B-Tree底层写磁盘操作会用新页覆盖旧页，这和LSM-tree的添加新文件有本质区别。覆盖操作比追加会复杂。
+* 页分裂时，如果崩溃，会导致索引损坏。
+* 为了让数据库在崩溃时可恢复，常见B-tree实现了WAL(write-ahead log, also known as a redo log)，在写数据库前，先在一个日志文件中做追加。
+* 由于原地更新页面，updating pages in place，所以需要考虑并发控制，线程可能会看到the tree in an inconsistent state。
+
+#### B-Tree vs LSM-Tree
+
+通常来说，LSM-Tree的写更快，B-Tree的读更快。You need to test systems with your particular workload in order to make a valid comparison.
+
+> Advantages of LSM-Tree
+
+B-tree index最少写两次磁盘：一次WAL，一次写tree page，如果有页分裂还要再写一次。
+LSM-tree也可能会有多次写磁盘：除了写DB，还要merge SSTalbes。It's known as write amplification.
