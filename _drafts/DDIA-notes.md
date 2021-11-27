@@ -103,5 +103,39 @@ The log-structured indexes we saw earlier break the database down into variable-
 
 > Advantages of LSM-Tree
 
-B-tree index最少写两次磁盘：一次WAL，一次写tree page，如果有页分裂还要再写一次。
-LSM-tree也可能会有多次写磁盘：除了写DB，还要merge SSTalbes。It's known as write amplification.
+* B-tree index最少写两次磁盘：一次WAL，一次写tree page，如果有页分裂还要再写一次。
+* LSM-tree也可能会有多次写磁盘：除了写DB，还要merge SSTalbes。It's known as write amplification.
+* LSM-tree压缩数据，B-tree预留页空间。有可能LSM-tree对磁盘压力更小，但也要考虑到write amplification。
+
+> Downsides of LSM-Tree
+
+* LSM-tree在压缩数据时，可能会影响对这些数据的并发访问，增加响应时间。
+* LSM-tree写入的通过量和compact的通过量可能不匹配。
+* B-tree index的每个key只保存在一个地方，LSM-tree的key可能保存在多个不同的segments里面。这让B-tree index在提供strong transaction时更容易。
+
+### 其它索引结构
+
+#### 在索引中储存值
+
+索引中的key是查询搜索的对象，value可以是下面两种之一：1. 实际的row （clustered index），2. 其它地方存储的row的引用。第二种方式实际的row存储在heap file中，通常追加，无顺序保存。
+
+* 堆文件的好处是存多个二级索引时，避免复制数据。
+* key不变，只修改value时，如果新value长度小，则可以直接覆盖到原来的位置，若长度大，则需要把数据移动到新位置，并更新引用指针。
+
+聚集索引clustered index将内容直接储存到index中，可以避免从索引到堆文件的一次额外跳转。
+
+MySQL innoDB的主键是聚集索引，二级索引引用主键（而不是堆文件）。SQL Server可以为每个表指定一个聚集索引。
+
+#### 多列索引
+
+最常见的multi-column index类型是级联索引 concatenated index。比如将 Lastname-firstname 当作索引，这样可以按 Lastname 查询，也可按 Lastname-firstname 查询，但不能按 Firstname查询。
+
+#### 全文索引和模糊索引
+
+Lucene使用类似SSTable的结构，此结构需要一个小的内存索引来告诉查询，为了找到一个键，可以拿到已排序文件中的offset，该内存索引类似字典树。
+
+#### 保存所有数据在内存中
+
+一些内存数据库也通过写入磁盘来提供持久性的功能，比如RAMCloud。Redis和Couchbase通过异步写入磁盘提供较弱的持久型。
+
+和想象中的不同，内存数据库的性能优势并不是因为不需要读硬盘。即使是磁盘数据库，如果有足够的内存，操作系统会缓存磁盘块，也不需要读硬盘。内存数据库快是因为避免了把内存中的数据结构，encoding成可以写入磁盘的形式。
