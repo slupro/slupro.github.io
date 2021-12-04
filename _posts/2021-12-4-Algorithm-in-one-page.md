@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "Algorithm in one page"
-subtitle:   "算法毕竟笔记"
-date:   2021-12-04 01:00:00 +10:00
+title:  "算法学习笔记"
+subtitle:   "Algorithm in one page"
+date:   2021-12-04 11:00:00
 author: "Steven Lu @slupro"
 categories: [学习笔记]  # up to 2.
 tags: [Algorithm]  # TAG names should always be lowercase, 0 to infinity.
