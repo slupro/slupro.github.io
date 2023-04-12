@@ -1,0 +1,192 @@
+<!DOCTYPE html><html lang="zh-CN" ><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><meta name="day-prompt" content="天前"><meta name="hour-prompt" content="小时前"><meta name="minute-prompt" content="分钟前"><meta name="justnow-prompt" content="刚刚"><meta name="generator" content="Jekyll v4.3.2" /><meta property="og:title" content="第一篇blog，windows下用jekyll docker写blog" /><meta name="author" content="Steven Lu @slupro" /><meta property="og:locale" content="zh_CN" /><meta name="description" content="准确的说并不是用jekyll写blog，而是用jekyll docker在本地验证自己的blog，然后好推送到github page上去。" /><meta property="og:description" content="准确的说并不是用jekyll写blog，而是用jekyll docker在本地验证自己的blog，然后好推送到github page上去。" /><link rel="canonical" href="https://slupro.github.io/posts/write-blog-in-windows/" /><meta property="og:url" content="https://slupro.github.io/posts/write-blog-in-windows/" /><meta property="og:site_name" content="slu blog" /><meta property="og:type" content="article" /><meta property="article:published_time" content="2021-06-27T12:00:00+10:00" /><meta name="twitter:card" content="summary" /><meta property="twitter:title" content="第一篇blog，windows下用jekyll docker写blog" /><meta name="twitter:site" content="@twitter_username" /><meta name="twitter:creator" content="@Steven Lu slupro" /><meta name="google-site-verification" content="google_meta_tag_verification" /> <script type="application/ld+json"> {"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Steven Lu @slupro"},"dateModified":"2021-07-03T18:19:11+10:00","datePublished":"2021-06-27T12:00:00+10:00","description":"准确的说并不是用jekyll写blog，而是用jekyll docker在本地验证自己的blog，然后好推送到github page上去。","headline":"第一篇blog，windows下用jekyll docker写blog","mainEntityOfPage":{"@type":"WebPage","@id":"https://slupro.github.io/posts/write-blog-in-windows/"},"url":"https://slupro.github.io/posts/write-blog-in-windows/"}</script><title>第一篇blog，windows下用jekyll docker写blog | slu blog</title><link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicons/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicons/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicons/favicon-16x16.png"><link rel="manifest" href="/assets/img/favicons/site.webmanifest"><link rel="shortcut icon" href="/assets/img/favicons/favicon.ico"><meta name="apple-mobile-web-app-title" content="slu blog"><meta name="application-name" content="slu blog"><meta name="msapplication-TileColor" content="#da532c"><meta name="msapplication-config" content="/assets/img/favicons/browserconfig.xml"><meta name="theme-color" content="#ffffff"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link rel="dns-prefetch" href="https://fonts.gstatic.com"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin="use-credentials"><link rel="dns-prefetch" href="https://www.google-analytics.com"><link rel="preconnect" href="https://www.googletagmanager.com" crossorigin="anonymous"><link rel="dns-prefetch" href="https://www.googletagmanager.com"><link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.11.2/css/all.min.css"><link rel="stylesheet" href="/assets/css/style.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@1.0.1/dist/bootstrap-toc.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/magnific-popup@1.1.0/dist/magnific-popup.min.css"> <script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script><body data-spy="scroll" data-target="#toc"><div id="sidebar" class="d-flex flex-column align-items-end" lang="zh-CN">
+<div class="profile-wrapper text-center">
+<div id="avatar"> <a href="/" alt="avatar" class="mx-auto"> <img src="/assets/img/favicons/android-chrome-192x192.png" alt="avatar" onerror="this.style.display='none'"> </a>
+</div>
+<div class="site-title mt-3"> <a href="/">slu blog</a>
+</div>
+<div class="site-subtitle font-italic">A simple dev blog</div>
+</div>
+<ul class="w-100">
+<li class="nav-item"> <a href="/" class="nav-link"> <i class="fa-fw fas fa-home ml-xl-3 mr-xl-3 unloaded"></i> <span>首页</span> </a>
+</li>
+<li class="nav-item"> <a href="/categories/" class="nav-link"> <i class="fa-fw fas fa-stream ml-xl-3 mr-xl-3 unloaded"></i> <span>分类</span> </a>
+</li>
+<li class="nav-item"> <a href="/tags/" class="nav-link"> <i class="fa-fw fas fa-tags ml-xl-3 mr-xl-3 unloaded"></i> <span>标签</span> </a>
+</li>
+<li class="nav-item"> <a href="/archives/" class="nav-link"> <i class="fa-fw fas fa-archive ml-xl-3 mr-xl-3 unloaded"></i> <span>归档</span> </a>
+</li>
+<li class="nav-item"> <a href="/about/" class="nav-link"> <i class="fa-fw fas fa-info ml-xl-3 mr-xl-3 unloaded"></i> <span>关于</span> </a>
+</li>
+</ul>
+<div class="sidebar-bottom mt-auto d-flex flex-wrap justify-content-center align-items-center"> <a href="https://github.com/slupro" aria-label="github" class="order-3" target="_blank" rel="noopener"> <i class="fab fa-github-alt"></i> </a> <a href="https://twitter.com/twitter_username" aria-label="twitter" class="order-4" target="_blank" rel="noopener"> <i class="fab fa-twitter"></i> </a> <a href="javascript:location.href%20=%20'mailto:'%20+%20%5B'bingocn','gmail.com'%5D.join('@')" aria-label="email" class="order-5"> <i class="fas fa-envelope"></i> </a> <a href="/feed.xml" aria-label="rss" class="order-6"> <i class="fas fa-rss"></i> </a> <span class="icon-border order-2"></span> <span id="mode-toggle-wrapper" class="order-1"> <i class="mode-toggle fas fa-adjust"></i> <script type="text/javascript"> class ModeToggle { static get MODE_KEY() { return "mode"; } static get DARK_MODE() { return "dark"; } static get LIGHT_MODE() { return "light"; } constructor() { if (this.hasMode) { if (this.isDarkMode) { if (!this.isSysDarkPrefer) { this.setDark(); } } else { if (this.isSysDarkPrefer) { this.setLight(); } } } var self = this; /* always follow the system prefers */ this.sysDarkPrefers.addListener(function() { if (self.hasMode) { if (self.isDarkMode) { if (!self.isSysDarkPrefer) { self.setDark(); } } else { if (self.isSysDarkPrefer) { self.setLight(); } } self.clearMode(); } self.updateMermaid(); }); } /* constructor() */ setDark() { $('html').attr(ModeToggle.MODE_KEY, ModeToggle.DARK_MODE); sessionStorage.setItem(ModeToggle.MODE_KEY, ModeToggle.DARK_MODE); } setLight() { $('html').attr(ModeToggle.MODE_KEY, ModeToggle.LIGHT_MODE); sessionStorage.setItem(ModeToggle.MODE_KEY, ModeToggle.LIGHT_MODE); } clearMode() { $('html').removeAttr(ModeToggle.MODE_KEY); sessionStorage.removeItem(ModeToggle.MODE_KEY); } get sysDarkPrefers() { return window.matchMedia("(prefers-color-scheme: dark)"); } get isSysDarkPrefer() { return this.sysDarkPrefers.matches; } get isDarkMode() { return this.mode == ModeToggle.DARK_MODE; } get isLightMode() { return this.mode == ModeToggle.LIGHT_MODE; } get hasMode() { return this.mode != null; } get mode() { return sessionStorage.getItem(ModeToggle.MODE_KEY); } /* get the current mode on screen */ get modeStatus() { if (this.isDarkMode || (!this.hasMode && this.isSysDarkPrefer) ) { return ModeToggle.DARK_MODE; } else { return ModeToggle.LIGHT_MODE; } } updateMermaid() { if (typeof mermaid !== "undefined") { let expectedTheme = (this.modeStatus === ModeToggle.DARK_MODE? "dark" : "default"); let config = { theme: expectedTheme }; /* re-render the SVG › <https://github.com/mermaid-js/mermaid/issues/311#issuecomment-332557344> */ $(".mermaid").each(function() { let svgCode = $(this).prev().children().html(); $(this).removeAttr("data-processed"); $(this).html(svgCode); }); mermaid.initialize(config); mermaid.init(undefined, ".mermaid"); } } flipMode() { if (this.hasMode) { if (this.isSysDarkPrefer) { if (this.isLightMode) { this.clearMode(); } else { this.setLight(); } } else { if (this.isDarkMode) { this.clearMode(); } else { this.setDark(); } } } else { if (this.isSysDarkPrefer) { this.setLight(); } else { this.setDark(); } } this.updateMermaid(); } /* flipMode() */ } /* ModeToggle */ let toggle = new ModeToggle(); $(".mode-toggle").click(function() { toggle.flipMode(); }); </script> </span>
+</div>
+</div><div id="topbar-wrapper" class="row justify-content-center topbar-down"><div id="topbar" class="col-11 d-flex h-100 align-items-center justify-content-between"> <span id="breadcrumb"> <span> <a href="/"> 首页 </a> </span> <span>第一篇blog，windows下用jekyll docker写blog</span> </span> <i id="sidebar-trigger" class="fas fa-bars fa-fw"></i><div id="topbar-title"> 文章</div>
+<i id="search-trigger" class="fas fa-search fa-fw"></i> <span id="search-wrapper" class="align-items-center"> <i class="fas fa-search fa-fw"></i> <input class="form-control" id="search-input" type="search" aria-label="search" autocomplete="off" placeholder="搜索..."> <i class="fa fa-times-circle fa-fw" id="search-cleaner"></i> </span> <span id="search-cancel">取消</span>
+</div></div><div id="main-wrapper">
+<div id="main">
+<div class="row">
+<div id="post-wrapper" class="col-12 col-lg-11 col-xl-8"><div class="post pl-1 pr-1 pl-sm-2 pr-sm-2 pl-md-4 pr-md-4">
+<h1 data-toc-skip>第一篇blog，windows下用jekyll docker写blog</h1>
+<div class="post-meta text-muted d-flex flex-column">
+<div> <span class="semi-bold"> Steven Lu @slupro </span> 发表于 <span class="timeago " data-toggle="tooltip" data-placement="bottom" title="2021-06-27, 12:00 +1000">2021-06-27<i class="unloaded">2021-06-27T12:00:00+10:00</i> </span>
+</div>
+<div> <span> 更新于 <span class="timeago lastmod" data-toggle="tooltip" data-placement="bottom" title="2021-07-03, 18:19 +1000">2021-07-03<i class="unloaded">2021-07-03T18:19:11+10:00</i> </span> </span> <span class="readtime" data-toggle="tooltip" data-placement="bottom" title="1234 字">6 分钟 阅读</span>
+</div>
+</div>
+<div class="post-content">
+<p>准确的说并不是用jekyll写blog，而是用jekyll docker在本地验证自己的blog，然后好推送到github page上去。</p>
+<h3 id="需求我想有个blog">需求：我想有个blog</h3>
+<p>一直想建个blog记录东西，可以当作笔记一样记录工作和学习中的一些足迹，还可以分享。之前也简单调研过一些建blog的信息，说说我的感受，主要是缺点哈：<img class="emoji" title=":joy:" alt=":joy:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f602.png" height="20" width="20"></p>
+<h4 id="wordpress">wordpress</h4>
+<p>用wordpress、joomla之类的感觉太重，虚拟主机便宜且操作起来简单，但是还是需要自己维护，包括安全性、备份等。blog内容和图片等在MySQL上，以后要是迁移到别的系统，可能都有未知的坑。感觉又要依赖MySQL里的数据，又要依赖wordpress本身，缺一个，数据的重新获取就会有麻烦。想到了西红柿炒鸡蛋，如果西红柿和鸡蛋分别放在两个篮子里，那有一个篮子出了问题，西红柿炒鸡蛋就做不出来了，而两个篮子里任意一个出问题的概率比一个篮子要大。</p>
+<h4 id="简书">简书</h4>
+<p>CSDN、简书、头条之类的blog，感觉界面上有些东西自己不可控，比如广告、弹窗、推送什么的，体验不好。有些人可能会觉得这上面的推荐也会给自己带来流量，这个仁者见仁智者见智了，比起那一点流量来说，我还是喜欢给自己一个更清爽的浏览界面。</p>
+<h4 id="github-pages">Github pages</h4>
+<p>因为我的blog会记录些技术的东西，所以 Github pages 当时也有考虑，它有两种建blog的方式：</p>
+<ol>
+<li>以jekyll为代表，提交markdown文档和脚本到github，由github来编译并发布。</li>
+<li>以Hugo为代表，在本机编译好页面后，提交到github。</li>
+</ol>
+<p>我倾向于第一种方式，提交markdown文件上去由github来编译，否则用Hugo编译的话本地需要保存原始的markdown文件和编译后的页面文件。</p>
+<p>但是我当时在windows环境折腾jekyll，各种版本兼容性问题，我对ruby又不熟，最后放弃了，毕竟我是想用blog来记录，而不是想折腾blog <img class="emoji" title=":rofl:" alt=":rofl:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f923.png" height="20" width="20"></p>
+<h4 id="不是blog的笔记本">不是blog的笔记本</h4>
+<blockquote><p>可能是我要求太多了：支持markdown，编辑方便，跨iphone、安卓、windows、mac无缝同步。</p></blockquote>
+<ol>
+<li>印象笔记：缺点是分享不方便，手机端不能编辑markdown的笔记。不过之前一直在用它，还充了很久会员，就当网页保存器吧。</li>
+<li>Notion：好看，但是担心公司小，哪天数据没了，就算文本和图片都有备份，如何导入到别的系统也会有麻烦。</li>
+</ol>
+<h3 id="最终方案">最终方案</h3>
+<p>前几天偶然看到jekyll有docker版了，这样就又可以用jekyll，又不用在windows环境折腾ruby和jekyll的库了。最终找到一个blog方案可以满足我的全部要求了：<img class="emoji" title=":smiley:" alt=":smiley:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f603.png" height="20" width="20"></p>
+<blockquote>
+<p>本地测试页面简单，一条docker语句就好。</p>
+<p>markdown里面的图片链接用相对路径，这样只要有markdown文件和图片，很容易切换到别的环境建站。</p>
+<p>可以离线写，github用来保存每次变更，相当于备份了。</p>
+<p>编辑markdown方便，vscode+extensions，预览、插图、版本管理等等在windows和mac下可以有一样的体验。</p>
+<p>在github pages上也可以很容易就实现：评论，统计，搜索，打赏，广告等等。</p>
+</blockquote>
+<p>一句话，实在找不到不用github pages的理由，还免费 <img class="emoji" title=":+1:" alt=":+1:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f44d.png" height="20" width="20"></p>
+<h3 id="大概的流程">大概的流程</h3>
+<ol>
+<li>安装<a href="https://docs.docker.com/docker-for-windows/install/">Docker Desktop for Windows</a>
+</li>
+<li>安装<a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">Windows Subsystem for Linux (WSL)</a>，指定WSL2为默认。</li>
+<li>选择一套jekyll模板，我用的是jekyll-theme-chirpy，可以通过该链接来使用<a href="https://github.com/cotes2020/chirpy-starter">chirpy模板</a>。注意第一次需要参考链接里面的步骤来部署到github pages。</li>
+<li>参考下面的命令用docker启动jekyll。</li>
+</ol>
+<h4 id="相关命令">相关命令</h4>
+<ul><li>在本地进入jekyll项目的目录后，下面的命令会启动jekyll serve，成功后就可以通过4000端口访问本地的开启的web服务：</li></ul>
+<div class="language-plaintext highlighter-rouge">
+<div class="code-header"> <span text-data=" Plaintext "><i class="fa-fw fas fa-code small"></i></span> <button aria-label="copy" title-succeed="已复制！"><i class="far fa-clipboard"></i></button>
+</div>
+<div class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td>
+<td class="rouge-code"><pre>docker run --rm --label=jekyll --volume="%CD%:/srv/jekyll" -p 4000:4000 jekyll/jekyll:4.2.0 jekyll serve
+</pre></td>
+</tr></tbody></table></code></div>
+</div>
+<p>类似的，可以用 jekyll build，或者给serve添加watch, trace等参数。</p>
+<ul><li>如果环境里面有错误，可以通过下面的命令进入jekyll docker查看。</li></ul>
+<div class="language-plaintext highlighter-rouge">
+<div class="code-header"> <span text-data=" Plaintext "><i class="fa-fw fas fa-code small"></i></span> <button aria-label="copy" title-succeed="已复制！"><i class="far fa-clipboard"></i></button>
+</div>
+<div class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td>
+<td class="rouge-code"><pre>docker run --rm --label=jekyll --volume="%CD%:/srv/jekyll" -it jekyll/jekyll:4.2.0 /bin/bash
+</pre></td>
+</tr></tbody></table></code></div>
+</div>
+<h4 id="常见问题">常见问题</h4>
+<ol><li>提示 /srv/jekyll 目录没有权限：</li></ol>
+<div class="language-plaintext highlighter-rouge">
+<div class="code-header"> <span text-data=" Plaintext "><i class="fa-fw fas fa-code small"></i></span> <button aria-label="copy" title-succeed="已复制！"><i class="far fa-clipboard"></i></button>
+</div>
+<div class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td>
+<td class="rouge-code"><pre>jekyll 3.9.0 | Error:  Operation not permitted @ apply2files - /srv/jekyll
+/usr/local/lib/ruby/2.7.0/fileutils.rb:1346:in `chmod': Operation not permitted @ apply2files - /srv/jekyll (Errno::EPERM)
+</pre></td>
+</tr></tbody></table></code></div>
+</div>
+<p>需要进入到jekyll docker中将/srv/jekyll目录改为jekyll用户：</p>
+<div class="language-plaintext highlighter-rouge">
+<div class="code-header"> <span text-data=" Plaintext "><i class="fa-fw fas fa-code small"></i></span> <button aria-label="copy" title-succeed="已复制！"><i class="far fa-clipboard"></i></button>
+</div>
+<div class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td>
+<td class="rouge-code"><pre>docker run --rm --label=jekyll --volume="%CD%:/srv/jekyll" -it jekyll/jekyll:4.2.0 /bin/bash
+chown -R jekyll:jekyll /srv/jekyll
+</pre></td>
+</tr></tbody></table></code></div>
+</div>
+</div>
+<div class="post-tail-wrapper text-muted">
+<div class="post-meta mb-3"> <i class="far fa-folder-open fa-fw mr-1"></i> <a href="/categories/%E5%BB%BA%E7%AB%99/">建站</a>
+</div>
+<div class="post-tags"> <i class="fa fa-tags fa-fw mr-1"></i> <a href="/tags/docker/" class="post-tag no-text-decoration">docker</a> <a href="/tags/jekyll/" class="post-tag no-text-decoration">jekyll</a>
+</div>
+<div class="post-tail-bottom d-flex justify-content-between align-items-center mt-3 pt-5 pb-2">
+<div class="license-wrapper"> 本文由作者按照 <a href="https://creativecommons.org/licenses/by/4.0/"> CC BY 4.0 </a> 进行授权</div>
+<div class="share-wrapper"> <span class="share-label text-muted mr-1">分享</span> <span class="share-icons"> <a href="https://twitter.com/intent/tweet?text=%E7%AC%AC%E4%B8%80%E7%AF%87blog%EF%BC%8Cwindows%E4%B8%8B%E7%94%A8jekyll%20docker%E5%86%99blog%20-%20slu%20blog&amp;url=https://slupro.github.io/posts/write-blog-in-windows/" data-toggle="tooltip" data-placement="top" title="Twitter" target="_blank" rel="noopener" aria-label="Twitter"> <i class="fa-fw fab fa-twitter"></i> </a> <a href="https://www.facebook.com/sharer/sharer.php?title=%E7%AC%AC%E4%B8%80%E7%AF%87blog%EF%BC%8Cwindows%E4%B8%8B%E7%94%A8jekyll%20docker%E5%86%99blog%20-%20slu%20blog&amp;u=https://slupro.github.io/posts/write-blog-in-windows/" data-toggle="tooltip" data-placement="top" title="Facebook" target="_blank" rel="noopener" aria-label="Facebook"> <i class="fa-fw fab fa-facebook-square"></i> </a> <a href="https://telegram.me/share?text=%E7%AC%AC%E4%B8%80%E7%AF%87blog%EF%BC%8Cwindows%E4%B8%8B%E7%94%A8jekyll%20docker%E5%86%99blog%20-%20slu%20blog&amp;url=https://slupro.github.io/posts/write-blog-in-windows/" data-toggle="tooltip" data-placement="top" title="Telegram" target="_blank" rel="noopener" aria-label="Telegram"> <i class="fa-fw fab fa-telegram"></i> </a> <i id="copy-link" class="fa-fw fas fa-link small" data-toggle="tooltip" data-placement="top" title="分享链接" title-succeed="链接已复制！"> </i> </span>
+</div>
+</div>
+</div>
+</div></div>
+<div id="panel-wrapper" class="col-xl-3 pl-2 text-muted topbar-down">
+<div class="access">
+<div id="access-lastmod" class="post"> <span>最近更新</span><ul class="post-content pl-0 pb-1 ml-1 mt-2">
+<li><a href="/posts/Linux-network-rcv/">Linux网络-接收数据包</a></li>
+<li><a href="/posts/Algorithm-in-one-page/">算法学习笔记</a></li>
+<li><a href="/posts/ksoftirqd-occupied-100percent-CPU/">ksoftirqd occupied 100% CPU</a></li>
+<li><a href="/posts/write-blog-in-windows/">第一篇blog，windows下用jekyll docker写blog</a></li>
+</ul>
+</div>
+<div id="access-tags"> <span>热门标签</span><div class="d-flex flex-wrap mt-3 mb-1 mr-3"> <a class="post-tag" href="/tags/linux/">Linux</a> <a class="post-tag" href="/tags/algorithm/">Algorithm</a> <a class="post-tag" href="/tags/cloud/">cloud</a> <a class="post-tag" href="/tags/docker/">docker</a> <a class="post-tag" href="/tags/java/">java</a> <a class="post-tag" href="/tags/jekyll/">jekyll</a> <a class="post-tag" href="/tags/kickstart/">kickstart</a> <a class="post-tag" href="/tags/ksoftirqd/">ksoftirqd</a> <a class="post-tag" href="/tags/kubernetes/">kubernetes</a> <a class="post-tag" href="/tags/network/">network</a>
+</div>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@1.0.1/dist/bootstrap-toc.min.js"></script><div id="toc-wrapper" class="pl-0 pr-4 mb-5"> <span class="pl-3 pt-2 mb-2">文章内容</span><nav id="toc" data-toggle="toc"></nav>
+</div>
+</div>
+</div>
+<div class="row"><div class="col-12 col-lg-11 col-xl-8"><div id="post-extend-wrapper" class="pl-1 pr-1 pl-sm-2 pr-sm-2 pl-md-4 pr-md-4">
+<div id="related-posts" class="mt-5 mb-2 mb-sm-4">
+<h3 class="pt-2 mt-1 mb-4 ml-1" data-toc-skip>相关文章</h3>
+<div class="card-deck mb-4">
+<div class="card"> <a href="/posts/Algorithm-in-one-page/"><div class="card-body"> <span class="timeago small">2021-12-04<i class="unloaded">2021-12-04T02:00:00+11:00</i> </span><h3 class="pt-0 mt-1 mb-3" data-toc-skip>算法学习笔记</h3>
+<div class="text-muted small"><p> 之前在极客时间学习算法时做的笔记，截图很多引用自王争的《数据结构与算法之美》，推荐大家可以买书或者去极客时间学习。 时间复杂度(O) 图 链表 写链表的注意事项 重点留意边界条件处理经常用来检查链表是否正确的边界4个边界条件： 如果链表为空时，代码是否能正常工作？ 如果链表只包含一个节点时，代码是否能正常工作？ 如果链表只包含两个节点时，代码是否能正常工...</p></div>
+</div></a>
+</div>
+<div class="card"> <a href="/posts/kickstart-RHEL-8-by-PXE-server/"><div class="card-body"> <span class="timeago small">2021-11-20<i class="unloaded">2021-11-20T09:00:00+11:00</i> </span><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Kickstart Red Hat Enterprise Linux 8 by PXE server</h3>
+<div class="text-muted small"><p> Kickstart RHEL 8 Automated installation steps Create a Kickstart file. Prepare the Linux installation ISO or installation files. Setup PXE server. Setup Web server to provide Kickstart f...</p></div>
+</div></a>
+</div>
+<div class="card"> <a href="/posts/Linux-network-rcv/"><div class="card-body"> <span class="timeago small">2021-10-15<i class="unloaded">2021-10-15T13:00:00+11:00</i> </span><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Linux网络-接收数据包</h3>
+<div class="text-muted small"><p> 基于Linux kernel 6.0 Linux内核收包总览 sequenceDiagram participant Network participant NIC participant CPU participant Kernel participant User Network-&gt;&gt;NIC: 数据帧从外部网络到达网卡 NIC-&gt;...</p></div>
+</div></a>
+</div>
+</div>
+</div>
+<div class="post-navigation d-flex justify-content-between"> <span class="btn btn-outline-primary disabled" prompt="上一篇"><p>-</p></span> <a href="/posts/ksoftirqd-occupied-100percent-CPU/" class="btn btn-outline-primary" prompt="下一篇"><p>ksoftirqd occupied 100% CPU</p></a>
+</div>
+<div id="disqus_thread" class="pt-2 pb-2"><p class="text-center text-muted small"> Comments powered by <a href="https://disqus.com/">Disqus</a>.</p></div>
+<script type="text/javascript"> var disqus_config = function () { this.page.url = 'https://slupro.github.io/posts/write-blog-in-windows/'; this.page.identifier = '/posts/write-blog-in-windows/'; }; /* Lazy loading */ var disqus_observer = new IntersectionObserver(function (entries) { if(entries[0].isIntersecting) { (function () { var d = document, s = d.createElement('script'); s.src = 'https://slupro.disqus.com/embed.js'; s.setAttribute('data-timestamp', +new Date()); (d.head || d.body).appendChild(s); })(); disqus_observer.disconnect(); } }, { threshold: [0] }); disqus_observer.observe(document.querySelector('#disqus_thread')); /* Auto switch theme */ function reloadDisqus() { /* Disqus hasn't been loaded */ if (typeof DISQUS === "undefined") { return; } if (document.readyState == 'complete') { DISQUS.reset({ reload: true, config: disqus_config }); } } const modeToggle = document.querySelector(".mode-toggle"); if (modeToggle !== null) { modeToggle.addEventListener('click', reloadDisqus); window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', reloadDisqus); } </script>
+</div></div></div>
+<footer class="d-flex w-100 justify-content-center"><div class="d-flex justify-content-between align-items-center">
+<div class="footer-left"><p class="mb-0"> © 2023 <a href="https://twitter.com/username">Steven</a>. <span data-toggle="tooltip" data-placement="top" title="除非另有说明，本网站上的博客文章均由作者按照知识共享署名 4.0 国际 (CC BY 4.0) 许可协议进行授权。">保留部分权利。</span></p></div>
+<div class="footer-right"><p class="mb-0"> 本站由 <a href="https://jekyllrb.com" target="_blank" rel="noopener">Jekyll</a> 生成，采用 <a href="https://github.com/cotes2020/jekyll-theme-chirpy" target="_blank" rel="noopener">Chirpy</a> 主题。</p></div>
+</div></footer>
+</div>
+<div id="search-result-wrapper" class="d-flex justify-content-center unloaded"><div class="col-12 col-sm-11 post-content">
+<div id="search-hints">
+<h4 class="text-muted mb-4">热门标签</h4>
+<a class="post-tag" href="/tags/linux/">Linux</a> <a class="post-tag" href="/tags/algorithm/">Algorithm</a> <a class="post-tag" href="/tags/cloud/">cloud</a> <a class="post-tag" href="/tags/docker/">docker</a> <a class="post-tag" href="/tags/java/">java</a> <a class="post-tag" href="/tags/jekyll/">jekyll</a> <a class="post-tag" href="/tags/kickstart/">kickstart</a> <a class="post-tag" href="/tags/ksoftirqd/">ksoftirqd</a> <a class="post-tag" href="/tags/kubernetes/">kubernetes</a> <a class="post-tag" href="/tags/network/">network</a>
+</div>
+<div id="search-results" class="d-flex flex-wrap justify-content-center text-muted mt-3"></div>
+</div></div>
+</div><div id="mask"></div><a id="back-to-top" href="#" aria-label="back-to-top" class="btn btn-lg btn-box-shadow" role="button"> <i class="fas fa-angle-up"></i> </a> <script src="https://cdn.jsdelivr.net/npm/simple-jekyll-search@1.10.0/dest/simple-jekyll-search.min.js"></script> <script> SimpleJekyllSearch({ searchInput: document.getElementById('search-input'), resultsContainer: document.getElementById('search-results'), json: '/assets/js/data/search.json', searchResultTemplate: '<div class="pl-1 pr-1 pl-sm-2 pr-sm-2 pl-lg-4 pr-lg-4 pl-xl-0 pr-xl-0"> <a href="{url}">{title}</a><div class="post-meta d-flex flex-column flex-sm-row text-muted mt-1 mb-1"> {categories} {tags}</div><p>{snippet}</p></div>', noResultsText: '<p class="mt-5">搜索结果为空</p>', templateMiddleware: function(prop, value, template) { if (prop === 'categories') { if (value === '') { return `${value}`; } else { return `<div class="mr-sm-4"><i class="far fa-folder fa-fw"></i>${value}</div>`; } } if (prop === 'tags') { if (value === '') { return `${value}`; } else { return `<div><i class="fa fa-tag fa-fw"></i>${value}</div>`; } } } }); </script> <script src="https://cdn.jsdelivr.net/combine/npm/lozad/dist/lozad.min.js,npm/magnific-popup@1/dist/jquery.magnific-popup.min.js,npm/clipboard@2/dist/clipboard.min.js"></script> <script defer src="/assets/js/dist/post.min.js"></script> <script src="https://cdn.jsdelivr.net/combine/npm/popper.js@1.16.1,npm/bootstrap@4/dist/js/bootstrap.min.js"></script> <script defer src="/app.js"></script> <script defer src="https://www.googletagmanager.com/gtag/js?id=G-D6RJENKPPK"></script> <script> document.addEventListener("DOMContentLoaded", function(event) { window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-D6RJENKPPK'); }); </script>
