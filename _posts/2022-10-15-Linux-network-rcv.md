@@ -2,7 +2,7 @@
 layout: post
 title:  "Linux网络-接收数据包"
 subtitle:   "Linux network - receive packets"
-date:   2022-10-15 12:00:00 +10:00
+date:   2021-10-15 12:00:00 +10:00
 author: "Steven Lu @slupro"
 categories: [学习笔记]  # up to 2.
 tags: [Linux, network]  # TAG names should always be lowercase, 0 to infinity.
@@ -13,11 +13,19 @@ tags: [Linux, network]  # TAG names should always be lowercase, 0 to infinity.
 # Linux内核收包总览
 
 ```mermaid
-graph TD;
-  A-->B;
-  A-->C;
-  B-->D;
-  C-->D;
+sequenceDiagram
+  participant Network
+  participant NIC
+  participant CPU
+  participant Kernel
+  participant User
+  Network->>NIC: 数据帧从外部网络到达网卡
+  NIC->>Kernel: 网卡把帧 DMA 到内存RingBuffer
+  NIC->>CPU: 网卡硬中断通知 CPU
+  CPU->>Kernel: CPU 响应硬中断，简单处理后发出软中断
+  Kernel-->>Kernel: ksoftirqd线程处理软中断，调用网卡驱动注册的poll函数开始收包
+  Note right of Kernel: 帧被从RingBuffer上取下来保存为一个skb
+  Kernel->>User: 协议层开始处理帧，处理完后被放到socket的接收队列中
 ```
 
 # Linux启动
